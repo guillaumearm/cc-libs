@@ -1,4 +1,4 @@
-# ComputerCraft apis
+# Trap's ComputerCraft APIs
 
 ## Installation
 ```
