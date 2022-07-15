@@ -1,4 +1,4 @@
-# CC apis
+# ComputerCraft apis
 
 ## Installation
 ```
