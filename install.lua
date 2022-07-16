@@ -4,6 +4,7 @@ local LIST_FILES = {
   'router.lua',
   'startup/servers.lua',
   'apis/net.lua',
+  'apis/eventloop.lua',
 };
 
 local REPO_PREFIX = 'https://raw.githubusercontent.com/guillaumearm/cc-libs/master/'

@@ -130,9 +130,15 @@ local function createNetwork(modem, routingChannel, timeoutInSec)
     return nil;
   end
 
+  local function openChannel(chan)
+    modem.open(chan);
+  end
+
   return {
     send = send,
-    waitMessage = waitMessage
+    waitMessage = waitMessage,
+    isPayloadOk = isPayloadOk,
+    openChannel = openChannel,
   }
 end
 
