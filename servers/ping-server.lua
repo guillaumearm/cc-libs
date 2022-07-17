@@ -1,4 +1,4 @@
--- ping-server v2.0.0
+local _VERSION = "2.0.0"
 
 -- -- Example: implementation simple de ping-server
 local PING_CHANNEL = 9;
@@ -26,5 +26,6 @@ net.listenRequest(PING_CHANNEL, 'ping', function(message, reply)
   end
 end)
 
+print('ping-server v' .. _VERSION .. ' started.')
 
 net.start();

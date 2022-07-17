@@ -1,4 +1,16 @@
--- router v1.2.0
+local _VERSION = '1.2.0';
+
+local firstArg = ...;
+
+if firstArg == '-version' or firstArg == '--version' then
+  print('v' .. _VERSION);
+  return;
+end
+
+if firstArg then
+  error('Invalid router argument.');
+  return
+end
 
 local ROUTER_CHANNEL = 10;
 local VERBOSE = true;

@@ -1,4 +1,11 @@
--- ping v2.0.1
+local _VERSION = '2.0.1';
+
+local firstArg = ...;
+if firstArg == '-version' or firstArg == '--version' then
+  print('v' .. _VERSION);
+  return;
+end
+
 local PING_CHANNEL = 9;
 
 local createNet = require('/apis/net');

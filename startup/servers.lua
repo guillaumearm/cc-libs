@@ -2,6 +2,8 @@
 
 local SERVERS = {
   "servers/ping-server",
+  "servers/cube-server.lua",
+  "servers/cube-startup.lua",
 };
 
 local function shellFn()
@@ -33,7 +35,7 @@ for _, v in ipairs(SERVERS) do
   print("\t\t" .. v)
 end
 
-parallel.waitForAny(shellFn, table.unpack(servers));
+parallel.waitForAll(shellFn, table.unpack(servers));
 
 print("Servers stopped, reboot the machine...");
 
