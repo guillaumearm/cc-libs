@@ -241,9 +241,13 @@ local function createNetwork(el, modem, routingChannel, timeoutInSec)
     createEvent = createEvent,
     isPacketOk = isPacketOk,
     openChannel = openChannel,
+    open = openChannel,
     events = el,
+    eventloop = el,
     start = start,
+    startLoop = start,
     stop = stop,
+    stopLoop = stop,
   }
 end
 

@@ -1,7 +1,7 @@
 -- ping v2.0.0
 local PING_CHANNEL = 9;
 
-local createNet = require('apis/net');
+local createNet = require('/apis/net');
 local net = createNet();
 
 local args = table.pack(...);
