@@ -147,6 +147,17 @@ local COMMANDS = {
       return;
     end
 
+    if tonumber(machineId) then
+      local ok, result, packet = net.sendRequest(CUBE_CHANNEL, 'reboot', true, tonumber(machineId))
+
+      if not ok then
+        error(result)
+      end
+
+      print('reboot machine \'' .. tostring(packet.sourceId) .. '\'.');
+      return
+    end
+
     local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'reboot', true, machineId);
 
     if not ok then

@@ -22,6 +22,7 @@ local net = createNet(nil, modem);
 
 net.listenRequest(PING_CHANNEL, 'ping', function(message, reply)
   if message == 'ping' then
+    -- print('=======> ping received !');
     reply('pong');
   end
 end)

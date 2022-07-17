@@ -1,7 +1,7 @@
 local _VERSION = '1.0.0';
 
-local function trim(str)
-  return str:gsub("%s+", "");
+local function trim(s)
+  return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
 end
 
 local function readFile(path)
@@ -21,7 +21,7 @@ local startupCommand = trim(readFile('.cubestartup') or "");
 
 
 if startupCommand ~= "" then
-  print('cube-startup v' .. _VERSION .. ': execute \'' .. startupCommand .. '\'...')
+  print('cube-startup v' .. _VERSION .. ': execute \'' .. startupCommand .. '\'...');
   shell.run(startupCommand);
 else
   print('cube-startup v' .. _VERSION .. ' no startup command detected.')

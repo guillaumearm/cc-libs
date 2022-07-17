@@ -17,6 +17,7 @@ local function isPacketOk(packet)
     return false;
   end
 
+
   if not packet.routerId or not packet.sourceId then
     return false;
   end
@@ -69,7 +70,7 @@ local function createNetwork(el, modem, routingChannel, timeoutInSec)
     local sourceLabel = os.getComputerLabel();
     local routerId = nil;
 
-    if _G.isRouterEnabled == true then
+    if _G.isRouterEnabled then
       routerId = sourceId
     end
 
@@ -87,7 +88,7 @@ local function createNetwork(el, modem, routingChannel, timeoutInSec)
       return nil;
     end
 
-    if packet.destId == sourceLabel then
+    if packet.destId == nil or packet.destId == sourceLabel then
       os.queueEvent('modem_message', peripheral.getName(modem), channel, channel, packet, 0);
     end
 

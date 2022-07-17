@@ -4,8 +4,8 @@ local net = require('/apis/net')();
 
 local CUBE_CHANNEL = 64;
 
-local function trim(str)
-  return str:gsub("%s+", "");
+local function trim(s)
+  return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
 end
 
 local function readFile(path)
