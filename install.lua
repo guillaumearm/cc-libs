@@ -1,11 +1,14 @@
 local LIST_FILES = {
-  'ping.lua',
-  'ping-server.lua',
-  'router.lua',
   'startup/servers.lua',
+  'servers/ping-server.lua',
+  'ping.lua',
+  'router.lua',
   'apis/net.lua',
   'apis/eventloop.lua',
 };
+
+-- remove old files
+fs.delete('ping-server.lua')
 
 local REPO_PREFIX = 'https://raw.githubusercontent.com/guillaumearm/cc-libs/master/'
 

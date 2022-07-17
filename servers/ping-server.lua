@@ -1,10 +1,10 @@
--- ping-server v1.0.0
+-- ping-server v2.0.0
 
 -- -- Example: implementation simple de ping-server
 local PING_CHANNEL = 9;
 local MODEM_DETECTION_TIME = 3;  -- in seconds
 
-local createNet = require('apis/net');
+local createNet = require('/apis/net');
 
 local modem = peripheral.find('modem');
 
@@ -18,13 +18,13 @@ while not modem do
   os.sleep(MODEM_DETECTION_TIME);
 end
 
-local net = createNet(modem);
+local net = createNet(nil, modem);
 
-while true do
-  local message, payload = net.waitMessage(PING_CHANNEL);
-
+net.listenRequest(PING_CHANNEL, 'ping', function(message, reply)
   if message == 'ping' then
-    -- le troisième parametre de la fonction `net.send` est pour router un message a une machine specifique
-    net.send(PING_CHANNEL, 'pong', payload.sourceId);
+    reply('pong');
   end
-end
+end)
+
+
+net.start();

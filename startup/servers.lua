@@ -1,7 +1,7 @@
 -- Server Launcher v1.0.0
 
 local SERVERS = {
-  "ping-server",
+  "servers/ping-server",
 };
 
 local function shellFn()

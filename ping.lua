@@ -1,4 +1,4 @@
--- ping v1.2.0
+-- ping v2.0.0
 local PING_CHANNEL = 9;
 
 local createNet = require('apis/net');
@@ -6,7 +6,6 @@ local net = createNet();
 
 local args = table.pack(...);
 local targetComputerId = tonumber(args[1]) or args[1];
-
 
 local sourceId = os.getComputerID()
 local sourceLabel = os.getComputerLabel();
@@ -18,16 +17,20 @@ if targetComputerId == nil or targetComputerId == sourceId or targetComputerId =
 end
 
 -- envoyer un message sur le canal 9 à la machine cible
-net.send(PING_CHANNEL, "ping", targetComputerId);
 
--- recevoir et afficher un message sur le canal 9
-while true do
-  local message, payload = net.waitMessage(PING_CHANNEL);
+local ok, results, packets = net.sendMultipleRequests(PING_CHANNEL, 'ping', 'ping', targetComputerId);
 
-  if message == "pong" then
-    print("=> pong from " .. tostring(payload.sourceId)
-      .. (payload.sourceLabel and " (label=" .. tostring(payload.sourceLabel) .. ")" or ""));
-  elseif message == nil then
-    break
+if not ok then
+  error(results)
+end
+
+for k, message in ipairs(results) do
+  if message == 'pong' then
+    local packet = packets[k];
+
+    -- if targetComputerId == nil or targetComputerId == packet.sourceId or targetComputerId == packet.sourceLabel then
+    print("=> pong from " .. tostring(packet.sourceId)
+      .. (packet.sourceLabel and " (label=" .. tostring(packet.sourceLabel) .. ")" or ""));
+    -- end
   end
 end

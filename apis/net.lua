@@ -1,37 +1,39 @@
--- Network API v1.0.1
+-- Network API v2.0.0
+
+local createEventLoop = require('/apis/eventloop');
 
 local DEFAULT_TIMEOUT_WAIT_MESSAGE = 0.5;  -- in seconds
 local DEFAULT_ROUTING_CHANNEL = 10;
 
--- Utilitaire pour savoir si un payload nous est destiné.
--- le parametre 'payload' est une table avec les champs suivants:
+-- Utilitaire pour savoir si un packet nous est destiné.
+-- le parametre 'packet' est une table avec les champs suivants:
 --   - sourceId: l'id de la machine qui a envoyé le message
 --   - destId: l'id du destinataire, si l'id est nil le message est routé a tout le monde
 --   - routerId: l'id du routeur qui s'est occupé de transmettre le message
 --   - message: le contenu du message (qui sera le plus souvent une table)
 -- return un boolean
-local function isPayloadOk(payload)
-  if type(payload) ~= "table" then
+local function isPacketOk(packet)
+  if type(packet) ~= "table" then
     return false;
   end
 
-  if not payload.routerId or not payload.sourceId then
+  if not packet.routerId or not packet.sourceId then
     return false;
   end
 
-  if payload.sourceId == os.getComputerID() then
+  if packet.sourceId == os.getComputerID() then
     return false;
   end
 
-  if payload.destId == nil then
+  if packet.destId == nil then
     return true;
   end
 
-  if type(payload.destId) == 'number' and payload.destId == os.getComputerID() then
+  if type(packet.destId) == 'number' and packet.destId == os.getComputerID() then
     return true;
   end
 
-  if type(payload.destId) == 'string' and payload.destId == os.getComputerLabel() then
+  if type(packet.destId) == 'string' and packet.destId == os.getComputerLabel() then
     return true;
   end
 
@@ -69,24 +71,27 @@ end
 --
 -- local createNet = require('apis/net');
 -- net = createNet();
+-- local net = createNet(nil, modem);
+
+-- net.listenRequest(PING_CHANNEL, 'ping', function(message, reply)
+--   if message == 'ping' then
+--     reply('pong');
+--   end
+-- end)
 --
--- -- envoyer un message sur le canal 9
--- net.send(9, 'ping');
---
--- -- recevoir et afficher un message sur le canal 9
--- local message = net.waitMessage(9);
--- if message == 'pong' then
---   print('pong recu');
--- end
---
-local function createNetwork(modem, routingChannel, timeoutInSec)
+local function createNetwork(el, modem, routingChannel, timeoutInSec)
+  el = el or createEventLoop();
   modem = modem or peripheral.find("modem") or error("modem not found");
   routingChannel = routingChannel or DEFAULT_ROUTING_CHANNEL;
   timeoutInSec = timeoutInSec or DEFAULT_TIMEOUT_WAIT_MESSAGE;
 
+  local function openChannel(chan)
+    return modem.open(chan);
+  end
+
   -- net.send function
-  local function send(channel, message, destId)
-    local payload = {
+  local function sendRaw(channel, message, destId)
+    local packet = {
       sourceId = os.getComputerID(),
       sourceLabel = os.getComputerLabel(),
       routerId = nil,
@@ -94,51 +99,151 @@ local function createNetwork(modem, routingChannel, timeoutInSec)
       message = message
     }
 
-    modem.transmit(routingChannel, channel, payload);
+    return modem.transmit(routingChannel, channel, packet);
   end
 
-  -- net.waitMessage function
-  local function waitMessage(channelToListen)
-    local receivedPayload;
+  local function listenRaw(channel, handler)
+    openChannel(channel);
 
-    modem.open(channelToListen);
-
-    local timerId = os.startTimer(timeoutInSec);
-    local timedOut = false;
-
-    repeat
-      local messageType, timerIdOrSide, channel, _, payload = pullMultipleEvents("modem_message", "timer");
-      local channelOk, payloadOk;
-
-      if messageType == "modem_message" then
-        receivedPayload = payload;
-        channelOk = channel == channelToListen;
-        payloadOk = isPayloadOk(payload);
-      elseif messageType == 'timer' and timerIdOrSide == timerId then
-        timedOut = true;
+    return el.register('modem_message', function(_, _, replyChannel, packet)
+      if isPacketOk(packet) and channel == replyChannel then
+        handler(packet.message, packet);
       end
-    until channelOk and payloadOk or timedOut
-
-    if timedOut then
-      return nil;
-    end
-
-    if receivedPayload then
-      return receivedPayload.message, receivedPayload;
-    end
-
-    return nil;
+    end)
   end
 
-  local function openChannel(chan)
-    modem.open(chan);
+  local function send(channel, eventType, payload, destId)
+    local event = { type = eventType, payload = payload };
+    return sendRaw(channel, event, destId);
+  end
+
+  local function listen(channel, eventType, handler)
+    return listenRaw(channel, function(event, packet)
+      if event.type == eventType then
+        handler(event.payload, packet)
+      end
+    end)
+  end
+
+  local function listenRequest(channel, eventType, handler)
+    return listen(channel, eventType, function(payload, packet)
+      local reply = function(responsePayload)
+        send(channel, eventType .. "_response", responsePayload, packet.sourceId);
+      end
+
+      handler(payload, reply, packet);
+    end)
+  end
+
+  local function sendRequest(channel, eventType, payload, destId)
+    local ok = false;
+    local result = nil;
+    local packetResult = nil;
+
+    local privateEventLoop = createEventLoop();
+    local privateNet = createNetwork(privateEventLoop, modem, routingChannel, timeoutInSec);
+
+    privateNet.listen(channel, eventType .. "_response", function(responsePayload, packet)
+      ok = true;
+      result = responsePayload
+      packetResult = packet;
+      privateNet.stop();
+    end)
+
+    privateEventLoop.setTimeout(function()
+      result = "net.sendRequest timeout!"
+      privateNet.stop();
+    end, timeoutInSec);
+
+    privateNet.send(channel, eventType, payload, destId);
+    privateNet.start();
+
+    return ok, result, packetResult;
+  end
+
+  local function sendMultipleRequests(channel, eventType, payload, destId)
+    local ok = false;
+    local results = {};
+    local packetResults = {};
+
+    local privateEventLoop = createEventLoop();
+    local privateNet = createNetwork(privateEventLoop, modem, routingChannel, timeoutInSec);
+
+    privateNet.listen(channel, eventType .. "_response", function(responsePayload, packet)
+      ok = true;
+      table.insert(results, responsePayload)
+      table.insert(packetResults, packet);
+    end)
+
+    privateEventLoop.setTimeout(function()
+      if #results == 0 then
+        results = "net.sendRequest timeout!"
+      end
+      privateNet.stop();
+    end, timeoutInSec);
+
+    privateNet.send(channel, eventType, payload, destId);
+    privateNet.start();
+
+    return ok, results, packetResults;
+  end
+
+  local function createRequest(channel, eventType)
+    local requestApi = {};
+
+    function requestApi.send(payload, destId)
+      return sendRequest(channel, eventType, payload, destId);
+    end
+
+    function requestApi.sendMultiple(payload, destId)
+      return sendMultipleRequests(channel, eventType, payload, destId);
+    end
+
+    function requestApi.listen(handler)
+      return listenRequest(channel, eventType, handler)
+    end
+
+    return requestApi;
+  end
+
+  local function createEvent(channel, eventType)
+    local eventApi = {}
+
+
+    function eventApi.send(payload, destId)
+      return send(channel, eventType, payload, destId);
+    end
+
+    function eventApi.listen(handler)
+      return listen(channel, eventType, handler)
+    end
+
+    return eventApi;
+  end
+
+  local function start()
+    return el.startLoop();
+  end
+
+  local function stop()
+    return el.stopLoop();
   end
 
   return {
+    sendRaw = sendRaw,
+    listenRaw = listenRaw,
     send = send,
-    waitMessage = waitMessage,
-    isPayloadOk = isPayloadOk,
+    listen = listen,
+    sendRequest = sendRequest,
+    sendMultipleRequests = sendMultipleRequests,
+    listenRequest = listenRequest,
+    createRequest = createRequest,
+    createEvent = createEvent,
+    isPacketOk = isPacketOk,
     openChannel = openChannel,
+    events = el,
+    start = start,
+    stop = stop,
   }
 end
 

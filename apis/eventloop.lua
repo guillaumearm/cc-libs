@@ -1,3 +1,5 @@
+-- eventloop 2.0.0
+
 -- Basic event loop library for computer craft
 --
 -- Example usage:
@@ -23,7 +25,7 @@ end
 
 local STOP = '@libeventloop/STOP_HANDLER_SUBSCRIPTION';
 
-local function createEventLoop(net) -- TODO listenMessages
+local function createEventLoop()
   local api = {}
 
   local runningLoop = false;
@@ -356,16 +358,6 @@ local function createEventLoop(net) -- TODO listenMessages
         end
       end
     end
-  end
-
-  function api.listenMessages(givenChannel, handler)
-    net.openChannel(givenChannel)
-
-    return api.register("modem_message", function(_, channel, _, payload)
-      if net.isPayloadOk(payload) and channel == givenChannel then
-        handler(payload.message);
-      end
-    end)
   end
 
   -- onStop

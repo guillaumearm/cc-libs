@@ -1,4 +1,4 @@
--- router v1.1.0
+-- router v1.2.0
 
 local ROUTER_CHANNEL = 10;
 local VERBOSE = true;
@@ -6,10 +6,17 @@ local VERBOSE = true;
 local modem = peripheral.find("modem") or error("modem not found");
 modem.open(ROUTER_CHANNEL);
 
+print('started router on port ' .. tostring(ROUTER_CHANNEL) .. '...')
+
 local routerId = os.getComputerID();
 
 local function isPingForServer(payload)
-  if payload.message ~= 'ping' then
+
+  if not payload.message then
+    return false;
+  end
+
+  if payload.message.type ~= 'ping' then
     return false;
   end
 
@@ -44,7 +51,7 @@ while true do
         sourceLabel = os.getComputerLabel(),
         routerId = routerId,
         destId = payload.sourceId,
-        message = 'pong'
+        message = { type = "ping_response", payload = "pong" }
       }
       modem.transmit(replyChannel, replyChannel, responseRouterPayload)
     end
