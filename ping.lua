@@ -1,4 +1,4 @@
-local _VERSION = '2.0.1';
+local _VERSION = '2.0.2';
 
 local firstArg = ...;
 if firstArg == '-version' or firstArg == '--version' then
@@ -17,15 +17,6 @@ local targetComputerId = tonumber(args[1]) or args[1];
 local sourceId = os.getComputerID()
 local sourceLabel = os.getComputerLabel();
 
--- gérer les pongs locales
-if targetComputerId == nil or targetComputerId == sourceId or targetComputerId == sourceLabel then
-  print("=> local pong from " .. tostring(sourceId)
-    .. (sourceLabel and " (label=" .. tostring(sourceLabel) .. ")" or ""));
-end
-
-if targetComputerId == sourceId then
-  return;
-end
 
 -- envoyer un message sur le canal 9 à la machine cible
 

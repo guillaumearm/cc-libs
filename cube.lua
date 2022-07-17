@@ -1,4 +1,7 @@
 local _VERSION = '1.0.0';
+local CUBE_CHANNEL = 64;
+
+local net = require('/apis/net')();
 
 local cubeCommand, firstArg, secondArg = ...;
 
@@ -144,7 +147,17 @@ local COMMANDS = {
       return;
     end
 
-    print('TODO: reboot machine \'' .. tostring(machineId) .. '\'.');
+    local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'reboot', true, machineId);
+
+    if not ok then
+      error(results);
+    end
+
+    for k in ipairs(results) do
+      local packet = packets[k];
+
+      print('reboot machine \'' .. tostring(packet.sourceId) .. '\'.');
+    end
   end,
   deploy = function()
     if not isConfigFileExists() then

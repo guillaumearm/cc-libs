@@ -48,7 +48,10 @@ end)
 -- reboot event
 net.listenRequest(CUBE_CHANNEL, "reboot", function(_, reply)
   reply(true);
-  os.reboot();
+
+  net.events.setTimeout(function()
+    os.reboot();
+  end, 0.1);
 end)
 
 -- set-startup event

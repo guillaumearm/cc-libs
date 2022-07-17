@@ -1,3 +1,5 @@
+local _VERSION = '1.0.0'
+
 local LIST_FILES = {
   'startup/servers.lua',
   'servers/ping-server.lua',

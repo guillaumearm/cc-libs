@@ -1,4 +1,4 @@
--- eventloop 2.0.0
+local _VERSION = '2.0.0'
 
 -- Basic event loop library for computer craft
 --

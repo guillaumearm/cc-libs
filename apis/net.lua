@@ -1,4 +1,4 @@
--- Network API v2.0.0
+local _VERSION = '2.1.1';
 
 local createEventLoop = require('/apis/eventloop');
 
@@ -21,9 +21,9 @@ local function isPacketOk(packet)
     return false;
   end
 
-  if packet.sourceId == os.getComputerID() then
-    return false;
-  end
+  -- if packet.sourceId == os.getComputerID() then
+  --   return false;
+  -- end
 
   if packet.destId == nil then
     return true;
@@ -38,32 +38,6 @@ local function isPacketOk(packet)
   end
 
   return false;
-end
-
--- Une simple fonction pour chercher une valeur dans une table
-local function find(predicate, values)
-  for k, v in ipairs(values) do
-    if predicate(v, k) then
-      return v;
-    end
-  end
-
-  return nil;
-end
-
--- Fonction utilitaire pour pouvoir pull plusieurs events (modem_message et timer par exemple)
-local function pullMultipleEvents(...)
-  local eventNames = table.pack(...);
-
-  while true do
-    local payload = table.pack(os.pullEvent());
-    local eventName = payload[1]
-
-    -- TODO index events
-    if find(function(e) return e == eventName end, eventNames) then
-      return table.unpack(payload);
-    end
-  end
 end
 
 -- -- Example: implementation simple de ping
@@ -91,13 +65,35 @@ local function createNetwork(el, modem, routingChannel, timeoutInSec)
 
   -- net.send function
   local function sendRaw(channel, message, destId)
+    local sourceId = os.getComputerID()
+    local sourceLabel = os.getComputerLabel();
+    local routerId = nil;
+
+    if _G.isRouterEnabled == true then
+      routerId = sourceId
+    end
+
     local packet = {
-      sourceId = os.getComputerID(),
-      sourceLabel = os.getComputerLabel(),
-      routerId = nil,
-      destId = destId,
+      sourceId = sourceId,
+      sourceLabel = sourceLabel,
+      routerId = routerId,
+      destId = tonumber(destId) or destId,
       message = message
     }
+
+    if packet.destId ~= nil and packet.destId == sourceId then
+      packet.routerId = packet.sourceId;
+      os.queueEvent('modem_message', peripheral.getName(modem), channel, channel, packet, 0);
+      return nil;
+    end
+
+    if packet.destId == sourceLabel then
+      os.queueEvent('modem_message', peripheral.getName(modem), channel, channel, packet, 0);
+    end
+
+    if packet.routerId then
+      return modem.transmit(channel, channel, packet);
+    end
 
     return modem.transmit(routingChannel, channel, packet);
   end
@@ -155,8 +151,11 @@ local function createNetwork(el, modem, routingChannel, timeoutInSec)
       privateNet.stop();
     end, timeoutInSec);
 
-    privateNet.send(channel, eventType, payload, destId);
-    privateNet.start();
+    privateNet.onStart(function()
+      privateNet.send(channel, eventType, payload, destId);
+    end)
+
+    privateNet.startLoop();
 
     return ok, result, packetResult;
   end
@@ -182,8 +181,11 @@ local function createNetwork(el, modem, routingChannel, timeoutInSec)
       privateNet.stop();
     end, timeoutInSec);
 
-    privateNet.send(channel, eventType, payload, destId);
-    privateNet.start();
+    privateNet.onStart(function()
+      privateNet.send(channel, eventType, payload, destId);
+    end)
+
+    privateNet.startLoop();
 
     return ok, results, packetResults;
   end
@@ -248,6 +250,8 @@ local function createNetwork(el, modem, routingChannel, timeoutInSec)
     startLoop = start,
     stop = stop,
     stopLoop = stop,
+    onStart = el.onStart,
+    onStop = el.onStop,
   }
 end
 

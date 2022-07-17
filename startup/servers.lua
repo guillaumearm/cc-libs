@@ -1,4 +1,4 @@
--- Server Launcher v1.0.0
+local _VERSION = '1.1.0'
 
 local SERVERS = {
   "servers/ping-server",
