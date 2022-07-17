@@ -1,4 +1,4 @@
--- ping v2.0.0
+-- ping v2.0.1
 local PING_CHANNEL = 9;
 
 local createNet = require('/apis/net');
@@ -16,12 +16,20 @@ if targetComputerId == nil or targetComputerId == sourceId or targetComputerId =
     .. (sourceLabel and " (label=" .. tostring(sourceLabel) .. ")" or ""));
 end
 
+if targetComputerId == sourceId then
+  return;
+end
+
 -- envoyer un message sur le canal 9 à la machine cible
 
 local ok, results, packets = net.sendMultipleRequests(PING_CHANNEL, 'ping', 'ping', targetComputerId);
 
-if not ok then
+if not ok and (targetComputerId ~= sourceId and targetComputerId ~= sourceLabel) then
   error(results)
+end
+
+if not ok then
+  return;
 end
 
 for k, message in ipairs(results) do
