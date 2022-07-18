@@ -1,9 +1,53 @@
-local _VERSION = '2.1.0';
+local _VERSION = '2.2.0';
 local CUBE_CHANNEL = 64;
 
 local net = require('/apis/net')();
 
 local cubeCommand, firstArg, secondArg = ...;
+
+local IGNORED_PATHS = {
+  ['/rom'] = true,
+  ['/.cubeboot'] = true,
+  ['/.git'] = true,
+  ['/.gitignore'] = true,
+}
+
+local function isValidPath(givenPath)
+  return not IGNORED_PATHS[givenPath]
+end
+
+local function getAllFiles(basePath, result)
+  basePath = basePath or '/'
+  result = result or {};
+
+  local fileNames = fs.list(basePath)
+
+  for i = 1, #fileNames do
+    local filePath = basePath .. fileNames[i];
+    local valid = isValidPath(filePath);
+
+    if valid and fs.isDir(filePath) then
+      getAllFiles(filePath .. '/', result);
+    elseif valid and not fs.isDir(filePath) then
+      table.insert(result, filePath)
+    end
+  end
+
+  return result;
+end
+
+local function readFile(path)
+  local file = fs.open(path, "r");
+
+  if not file then
+    return nil;
+  end
+
+  local contents = file.readAll()
+  file.close()
+
+  return contents
+end
 
 --- Pads str to length len with char from right
 local leftPad = function(str, len, char)
@@ -102,7 +146,10 @@ if cubeCommand == nil or cubeCommand == '' or isHelpFlag(cubeCommand) then
   return;
 end
 
-local rebootCommand = function(machineId)
+------------
+-- reboot --
+------------
+local function rebootCommand(machineId)
   if not machineId or machineId == '' then
     printUsageCommand('reboot');
     return;
@@ -121,7 +168,10 @@ local rebootCommand = function(machineId)
   end
 end
 
-local setBootCommand = function(machineId, shellCommand)
+--------------
+-- set-boot --
+--------------
+local function setBootCommand(machineId, shellCommand)
   if not machineId then
     printUsageCommand('set-boot');
     return;
@@ -146,6 +196,56 @@ local setBootCommand = function(machineId, shellCommand)
   end
 end
 
+------------
+-- deploy --
+------------
+local function deployCommand()
+  local allFiles = getAllFiles()
+
+  -- 1. get all machine ids (except the current one)
+  local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'ping', 'ping');
+
+  if not ok then
+    error(results);
+  end
+
+  local machineIds = {};
+
+  local localComputerId = os.getComputerID();
+
+  for k in ipairs(results) do
+    local packet = packets[k];
+
+    if packet.sourceId ~= localComputerId then
+      table.insert(machineIds, packet.sourceId);
+    end
+  end
+
+  -- 2. transfer files on all concerned machines
+  for machineIndex = 1, #machineIds do
+    local machineId = machineIds[machineIndex];
+
+    local fileTransfered = 0;
+
+    for i = 1, #allFiles do
+      local filePath = allFiles[i];
+      local fileContent = readFile(filePath)
+
+      local ok, res = net.sendRequest(CUBE_CHANNEL, 'deploy-file', { path = filePath, content = fileContent }, machineId);
+
+      if ok and res then
+        fileTransfered = fileTransfered + 1;
+      else
+        print('Error transfering file \'' .. filePath .. '\'');
+      end
+    end
+
+    print('|> ' .. tostring(fileTransfered) .. ' file(s) transfered on machine ' .. tostring(machineId))
+
+    rebootCommand(machineId);
+  end
+end
+
 local COMMANDS = {
   ls = function()
     local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'ping', 'ping');
@@ -158,11 +258,19 @@ local COMMANDS = {
     print(getRow('  ', 'ID', 'LABEL', 'BOOT'))
     print('--------------------------------------------')
 
+    local localMachineId = os.getComputerID();
+
     for k in ipairs(results) do
       local result = results[k];
       local packet = packets[k];
 
-      print(getRow('  ', packet.sourceId, packet.sourceLabel, result.startup))
+      local prefix = '  ';
+
+      if packet.sourceId == localMachineId then
+        prefix = '* '
+      end
+
+      print(getRow(prefix, packet.sourceId, packet.sourceLabel, result.startup))
     end
   end,
   configure = function()
@@ -175,9 +283,7 @@ local COMMANDS = {
   ["set-startup"] = setBootCommand,
   ["setstartup"] = setBootCommand,
   reboot = rebootCommand,
-  deploy = function()
-    print('not implemented yet.');
-  end,
+  deploy = deployCommand,
   version = function()
     print('cube client v' .. _VERSION);
   end,
