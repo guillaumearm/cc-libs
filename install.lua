@@ -1,4 +1,4 @@
-local _VERSION = '1.1.0'
+local _VERSION = '2.0.0'
 
 local LIST_FILES = {
   -- startup
@@ -17,10 +17,11 @@ local LIST_FILES = {
 };
 
 -- remove old files
-fs.delete('ping-server.lua');
-fs.delete('ping.lua')
-fs.delete('cube.lua')
-fs.delete('router.lua')
+fs.delete('ping-server.lua'); -- replaced by `servers/ping-server.lua`
+fs.delete('ping.lua') -- replaced by `programs/ping.lua`
+fs.delete('cube.lua') -- replaced by `programs/cube.lua`
+fs.delete('router.lua') -- replaced by `programs/router.lua`
+fs.delete('servers/cube-startup.lua'); -- replaced by `servers/cube-boot.lua`
 
 local REPO_PREFIX = 'https://raw.githubusercontent.com/guillaumearm/cc-libs/master/'
 
