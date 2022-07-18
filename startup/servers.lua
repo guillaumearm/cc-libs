@@ -6,6 +6,12 @@ local SERVERS = {
   "servers/cube-startup.lua",
 };
 
+local function init()
+  shell.setPath(shell.path() .. ':/programs');
+end
+
+init();
+
 local periphEmulation = function()
   -- attach modem
   periphemu.create('top', 'modem');
