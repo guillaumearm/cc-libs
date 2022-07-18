@@ -135,7 +135,7 @@ local COMMANDS = {
     end
 
     -- print('ID    LABEL\t\t\t\tSTARTUP');
-    print(getRow('  ', 'ID', 'LABEL', 'STARTUP'))
+    print(getRow('  ', 'ID', 'LABEL', 'BOOT'))
     print('--------------------------------------------')
 
     for k in ipairs(results) do
