@@ -1,4 +1,4 @@
-local _VERSION = '1.0.0';
+local _VERSION = '1.1.0';
 local CUBE_CHANNEL = 64;
 
 local net = require('/apis/net')();
@@ -94,6 +94,30 @@ if cubeCommand == nil or cubeCommand == '' or isHelpFlag(cubeCommand) then
   return;
 end
 
+local rebootCommand = function(machineId)
+  if not isConfigFileExists() then
+    print('Error: unable to deploy because \'.cuberc\' file is missing\nTry: \'cube init\' command')
+    return;
+  end
+
+  if not machineId or machineId == '' then
+    printUsageCommand('reboot');
+    return;
+  end
+
+  local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'reboot', true, machineId);
+
+  if not ok then
+    error(results);
+  end
+
+  for k in ipairs(results) do
+    local packet = packets[k];
+
+    print('reboot machine \'' .. tostring(packet.sourceId) .. '\'.');
+  end
+end
+
 local COMMANDS = {
   init = function()
     if isConfigFileExists() then
@@ -117,48 +141,18 @@ local COMMANDS = {
     end
     print('TODO: configure');
   end,
-  ["set-startup"] = function()
+  ["set-startup"] = function(machineId, shellCommand)
     if not isConfigFileExists() then
       print('Error: unable to deploy because \'.cuberc\' file is missing\nTry: \'cube init\' command')
       return;
     end
-
-    local machineId = firstArg;
-    local shellCommand = secondArg;
 
     if not machineId then
       printUsageCommand('set-startup');
       return;
     end
 
-    print('changed startup script on machine \'' ..
-      tostring(machineId) .. '\' by \'' .. tostring(shellCommand or '') .. '\'');
-  end,
-  reboot = function()
-    if not isConfigFileExists() then
-      print('Error: unable to deploy because \'.cuberc\' file is missing\nTry: \'cube init\' command')
-      return;
-    end
-
-    local machineId = firstArg;
-
-    if not machineId or machineId == '' then
-      printUsageCommand('reboot');
-      return;
-    end
-
-    if tonumber(machineId) then
-      local ok, result, packet = net.sendRequest(CUBE_CHANNEL, 'reboot', true, tonumber(machineId))
-
-      if not ok then
-        error(result)
-      end
-
-      print('reboot machine \'' .. tostring(packet.sourceId) .. '\'.');
-      return
-    end
-
-    local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'reboot', true, machineId);
+    local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'set-startup', shellCommand, machineId);
 
     if not ok then
       error(results);
@@ -167,9 +161,13 @@ local COMMANDS = {
     for k in ipairs(results) do
       local packet = packets[k];
 
-      print('reboot machine \'' .. tostring(packet.sourceId) .. '\'.');
+      print('changed startup script on machine \'' ..
+        tostring(packet.sourceId) .. '\' by \'' .. tostring(shellCommand or '') .. '\'');
+
+      rebootCommand(packet.sourceId);
     end
   end,
+  reboot = rebootCommand,
   deploy = function()
     if not isConfigFileExists() then
       print('Error: unable to deploy because \'.cuberc\' file is missing\nTry: \'cube init\' command')
@@ -181,8 +179,7 @@ local COMMANDS = {
   version = function()
     print('cube client v' .. _VERSION);
   end,
-  help = function()
-    local commandName = firstArg;
+  help = function(commandName)
     printUsageCommand(commandName);
   end
 }
@@ -204,4 +201,4 @@ if (isHelpFlag(firstArg)) then
   return;
 end
 
-cmd();
+cmd(firstArg, secondArg);
