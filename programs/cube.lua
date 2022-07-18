@@ -49,27 +49,9 @@ end
 local isHelpFlag = isFlag('help');
 local isVersionFlag = isFlag('version');
 
-local function writeFile(path, content)
-  local file = fs.open(path, "w");
-
-  if not file then
-    return false;
-  end
-
-  file.write(content)
-  file.close();
-
-  return true;
-end
-
-local function isConfigFileExists()
-  return fs.exists('.cuberc');
-end
-
 local function printUsage()
   print('cube usage:')
   print();
-  print('\t\t\tcube init');
   print('\t\t\tcube ls');
   print('\t\t\tcube configure');
   print('\t\t\tcube set-startup <machineId> [command]')
@@ -81,10 +63,6 @@ end
 
 local function printUsageCommand(commandName)
   local USAGES = {
-    init = function()
-      print('\t\t\tcube init');
-      print('Init the master cube directory.')
-    end,
     ls = function()
       print('\t\t\tcube ls');
       print('Print all available cubes in the cluster.')
@@ -130,11 +108,6 @@ if cubeCommand == nil or cubeCommand == '' or isHelpFlag(cubeCommand) then
 end
 
 local rebootCommand = function(machineId)
-  if not isConfigFileExists() then
-    print('Error: unable to deploy because \'.cuberc\' file is missing\nTry: \'cube init\' command')
-    return;
-  end
-
   if not machineId or machineId == '' then
     printUsageCommand('reboot');
     return;
@@ -154,18 +127,6 @@ local rebootCommand = function(machineId)
 end
 
 local COMMANDS = {
-  init = function()
-    if isConfigFileExists() then
-      print('cube is already initialized.');
-    else
-      local ok = writeFile('.cuberc', '');
-      if ok then
-        print('.cuberc file created');
-      else
-        error('Cannot create .cuberc file');
-      end
-    end
-  end,
   ls = function()
     local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'ping', 'ping');
 
@@ -185,18 +146,9 @@ local COMMANDS = {
     end
   end,
   configure = function()
-    if not isConfigFileExists() then
-      print('Error: unable to configure because \'.cuberc\' file is missing\nTry: \'cube init\' command')
-      return;
-    end
     print('not implemented yet.');
   end,
   ["set-startup"] = function(machineId, shellCommand)
-    if not isConfigFileExists() then
-      print('Error: unable to deploy because \'.cuberc\' file is missing\nTry: \'cube init\' command')
-      return;
-    end
-
     if not machineId then
       printUsageCommand('set-startup');
       return;
@@ -219,11 +171,6 @@ local COMMANDS = {
   end,
   reboot = rebootCommand,
   deploy = function()
-    if not isConfigFileExists() then
-      print('Error: unable to deploy because \'.cuberc\' file is missing\nTry: \'cube init\' command')
-      return;
-    end
-
     print('not implemented yet.');
   end,
   version = function()
