@@ -6,12 +6,17 @@ wget run https://raw.githubusercontent.com/guillaumearm/cc-libs/master/install.l
 ```
 
 ## Apis
-- `apis/eventloop`: a simple eventloop library
-- `apis/net`: api to simplify sending and receiving routed messages (based on eventloop library)
+- `/apis/eventloop`: a simple event loop api
+- `/apis/net`: api to simplify sending and receiving routed messages (based on `eventloop` library)
 
 ## Servers
-- `router`: route messages (you need to setup a router to be able to use all `apis/net` based programs and libs)
-- `servers/ping-server`: is automatically started on boot (use `apis/net`)
+All servers are automatically started at boot
+
+- `/servers/ping-server`: allow a machine to respond to a `ping` command.
+- `/servers/cube-server`: allow a machine to be controllable via `cube`.
+- `/servers/cube-startup.lua`: `cube` startup script.
 
 ## Programs
+- `router`: route messages (you need to setup a router to be able to use all `apis/net` based programs and libs)
 - `ping` : ping machines (use `apis/net`)
+- `cube`: cube client for deployment (use `cube help` command for more details)
