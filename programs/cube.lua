@@ -1,4 +1,4 @@
-local _VERSION = '2.0.0';
+local _VERSION = '2.1.0';
 local CUBE_CHANNEL = 64;
 
 local net = require('/apis/net')();
