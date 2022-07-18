@@ -1,4 +1,4 @@
-local _VERSION = '1.0.0';
+local _VERSION = '1.1.0';
 
 local function trim(s)
   return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
@@ -17,7 +17,7 @@ local function readFile(path)
   return contents
 end
 
-local startupCommand = trim(readFile('.cubestartup') or "");
+local startupCommand = trim(readFile('.cubestartup') or readFile('.cubestart') or "");
 
 
 if startupCommand ~= "" then

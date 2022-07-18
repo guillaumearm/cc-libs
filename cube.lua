@@ -1,4 +1,4 @@
-local _VERSION = '1.1.0';
+local _VERSION = '1.2.0';
 local CUBE_CHANNEL = 64;
 
 local net = require('/apis/net')();
@@ -132,14 +132,29 @@ local COMMANDS = {
     end
   end,
   ls = function()
-    print('TODO: ls');
+    local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'ping', 'ping');
+
+    if not ok then
+      error(results);
+    end
+
+    for k in ipairs(results) do
+      local result = results[k];
+      local packet = packets[k];
+
+      print("=> " .. tostring(packet.sourceId)
+        ..
+        (
+        packet.sourceLabel and " (label=" .. tostring(packet.sourceLabel) .. ")" or
+            "") .. ": startup='" .. result.startup .. "'");
+    end
   end,
   configure = function()
     if not isConfigFileExists() then
       print('Error: unable to configure because \'.cuberc\' file is missing\nTry: \'cube init\' command')
       return;
     end
-    print('TODO: configure');
+    print('not implemented yet.');
   end,
   ["set-startup"] = function(machineId, shellCommand)
     if not isConfigFileExists() then
@@ -174,7 +189,7 @@ local COMMANDS = {
       return;
     end
 
-    print('TODO: deploy.');
+    print('not implemented yet.');
   end,
   version = function()
     print('cube client v' .. _VERSION);
