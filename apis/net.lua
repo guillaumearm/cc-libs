@@ -1,4 +1,4 @@
-local _VERSION = '2.1.1';
+local _VERSION = '2.1.2';
 
 local createEventLoop = require('/apis/eventloop');
 
@@ -162,6 +162,16 @@ local function createNetwork(el, modem, routingChannel, timeoutInSec)
   end
 
   local function sendMultipleRequests(channel, eventType, payload, destId)
+    if destId ~= nil and tonumber(destId) ~= nil then
+      local ok, res, packet = sendRequest(channel, eventType, payload, destId);
+
+      if not ok then
+        return ok, res, packet
+      end
+
+      return ok, { res }, { packet };
+    end
+
     local ok = false;
     local results = {};
     local packetResults = {};

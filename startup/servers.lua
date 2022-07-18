@@ -6,7 +6,7 @@ local SERVERS = {
   "servers/cube-startup.lua",
 };
 
-if periphemu then
+local periphEmulation = function()
   -- attach modem
   periphemu.create('top', 'modem');
 
@@ -23,6 +23,10 @@ if periphemu then
     os.sleep(0.1)
     periphemu.create(10, 'computer');
   end
+end
+
+if periphemu then
+  periphEmulation();
 end
 
 local function shellFn()
