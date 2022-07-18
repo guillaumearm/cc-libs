@@ -1,4 +1,4 @@
-local _VERSION = '2.2.0';
+local _VERSION = '2.2.1';
 local CUBE_CHANNEL = 64;
 
 local net = require('/apis/net')();
@@ -243,6 +243,11 @@ local function deployCommand()
     print('|> ' .. tostring(fileTransfered) .. ' file(s) transfered on machine ' .. tostring(machineId))
 
     rebootCommand(machineId);
+
+    -- prevent CraftOS-PC crashes
+    if periphemu then
+      os.sleep(0.5)
+    end
   end
 end
 
