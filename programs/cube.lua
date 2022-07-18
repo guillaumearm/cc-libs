@@ -10,6 +10,7 @@ local IGNORED_PATHS = {
   ['/.cubeboot'] = true,
   ['/.git'] = true,
   ['/.gitignore'] = true,
+  ['/startup.lua'] = true,
 }
 
 local function isValidPath(givenPath)
@@ -149,7 +150,7 @@ end
 ------------
 -- reboot --
 ------------
-local function rebootCommand(machineId)
+local function rebootCommand(machineId, silentReboot)
   if not machineId or machineId == '' then
     printUsageCommand('reboot');
     return;
@@ -164,7 +165,9 @@ local function rebootCommand(machineId)
   for k in ipairs(results) do
     local packet = packets[k];
 
-    print('reboot machine \'' .. tostring(packet.sourceId) .. '\'');
+    if not silentReboot == true then
+      print('reboot machine \'' .. tostring(packet.sourceId) .. '\'');
+    end
   end
 end
 
@@ -192,7 +195,12 @@ local function setBootCommand(machineId, shellCommand)
       print('boot UPDATED');
     end
 
-    rebootCommand(packet.sourceId);
+    rebootCommand(packet.sourceId, true);
+
+    -- prevent CraftOS-PC crashes
+    if periphemu then
+      os.sleep(0.5)
+    end
   end
 end
 
@@ -240,9 +248,9 @@ local function deployCommand()
       end
     end
 
-    print('|> ' .. tostring(fileTransfered) .. ' file(s) transfered on machine ' .. tostring(machineId))
+    print(tostring(fileTransfered) .. ' file(s) transfered on machine ' .. tostring(machineId))
 
-    rebootCommand(machineId);
+    rebootCommand(machineId, true);
 
     -- prevent CraftOS-PC crashes
     if periphemu then
