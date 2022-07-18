@@ -1,4 +1,4 @@
-local _VERSION = '1.3.0';
+local _VERSION = '1.4.0';
 local CUBE_CHANNEL = 64;
 
 local net = require('/apis/net')();
@@ -12,18 +12,6 @@ local leftPad = function(str, len, char)
 
   if nbRepetition > 0 then
     return str .. string.rep(char, len - #str)
-  end
-
-  return str;
-end
-
---- Pads str to length len with char from left
-local rightPad = function(str, len, char)
-  if char == nil then char = ' ' end
-  local nbRepetition = len - #str;
-
-  if nbRepetition > 0 then
-    return string.rep(char, len - #str) .. str
   end
 
   return str;
