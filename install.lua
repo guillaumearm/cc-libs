@@ -6,7 +6,7 @@ local LIST_FILES = {
   -- servers
   'servers/ping-server.lua',
   'servers/cube-server.lua',
-  'servers/cube-startup.lua',
+  'servers/cube-boot.lua',
   -- programs
   'programs/router.lua', -- router is not in servers folder because he's not ran on every machines
   'programs/ping.lua',

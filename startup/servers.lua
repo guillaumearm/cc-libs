@@ -3,7 +3,7 @@ local _VERSION = '1.1.1'
 local SERVERS = {
   "servers/ping-server",
   "servers/cube-server.lua",
-  "servers/cube-startup.lua",
+  "servers/cube-boot.lua",
 };
 
 local function init()

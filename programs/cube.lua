@@ -1,4 +1,4 @@
-local _VERSION = '1.4.0';
+local _VERSION = '2.0.0';
 local CUBE_CHANNEL = 64;
 
 local net = require('/apis/net')();
@@ -42,7 +42,7 @@ local function printUsage()
   print();
   print('\t\t\tcube ls');
   print('\t\t\tcube configure');
-  print('\t\t\tcube set-startup <machineId> [command]')
+  print('\t\t\tcube set-boot <machineId> [command]')
   print('\t\t\tcube reboot <machineId>')
   print('\t\t\tcube deploy')
   print('\t\t\tcube version')
@@ -50,6 +50,11 @@ local function printUsage()
 end
 
 local function printUsageCommand(commandName)
+  local function setBootUsage()
+    print('\t\t\tcube set-boot <machineId> [command]')
+    print('Setup a startup shell command on a remote cube.')
+  end
+
   local USAGES = {
     ls = function()
       print('\t\t\tcube ls');
@@ -59,10 +64,12 @@ local function printUsageCommand(commandName)
       print('\t\t\tcube configure');
       print('Setup remote slave cubes.')
     end,
-    ["set-startup"] = function()
-      print('\t\t\tcube set-startup <machineId> [command]')
-      print('Setup a startup shell command on a remote cube.')
-    end,
+    ["set-boot"] = setBootUsage,
+    ["setboot"] = setBootUsage,
+    ["set-start"] = setBootUsage,
+    ["setstart"] = setBootUsage,
+    ["set-startup"] = setBootUsage,
+    ["setstartup"] = setBootUsage,
     reboot = function()
       print('\t\t\tcube reboot <machineId>')
       print('Reboot a cube machine.');
@@ -110,7 +117,32 @@ local rebootCommand = function(machineId)
   for k in ipairs(results) do
     local packet = packets[k];
 
-    print('reboot machine \'' .. tostring(packet.sourceId) .. '\'.');
+    print('reboot machine \'' .. tostring(packet.sourceId) .. '\'');
+  end
+end
+
+local setBootCommand = function(machineId, shellCommand)
+  if not machineId then
+    printUsageCommand('set-boot');
+    return;
+  end
+
+  local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'set-boot', shellCommand, machineId);
+
+  if not ok then
+    error(results);
+  end
+
+  for k in ipairs(results) do
+    local packet = packets[k];
+
+    if shellCommand == nil or shellCommand == '' then
+      print('boot DELETED');
+    else
+      print('boot UPDATED');
+    end
+
+    rebootCommand(packet.sourceId);
   end
 end
 
@@ -136,27 +168,12 @@ local COMMANDS = {
   configure = function()
     print('not implemented yet.');
   end,
-  ["set-startup"] = function(machineId, shellCommand)
-    if not machineId then
-      printUsageCommand('set-startup');
-      return;
-    end
-
-    local ok, results, packets = net.sendMultipleRequests(CUBE_CHANNEL, 'set-startup', shellCommand, machineId);
-
-    if not ok then
-      error(results);
-    end
-
-    for k in ipairs(results) do
-      local packet = packets[k];
-
-      print('changed startup script on machine \'' ..
-        tostring(packet.sourceId) .. '\' by \'' .. tostring(shellCommand or '') .. '\'');
-
-      rebootCommand(packet.sourceId);
-    end
-  end,
+  ["set-boot"] = setBootCommand,
+  ["setboot"] = setBootCommand,
+  ["set-start"] = setBootCommand,
+  ["setstart"] = setBootCommand,
+  ["set-startup"] = setBootCommand,
+  ["setstartup"] = setBootCommand,
   reboot = rebootCommand,
   deploy = function()
     print('not implemented yet.');

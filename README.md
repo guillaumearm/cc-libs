@@ -14,7 +14,7 @@ All servers are automatically started at boot
 
 - `/servers/ping-server`: allow a machine to respond to a `ping` command.
 - `/servers/cube-server`: allow a machine to be controllable via `cube`.
-- `/servers/cube-startup.lua`: `cube` startup script.
+- `/servers/cube-boot.lua`: `cube` boot script.
 
 ## Programs
 - `router`: route messages (you need to setup a router to be able to use all `apis/net` based programs and libs)

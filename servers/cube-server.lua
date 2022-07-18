@@ -1,4 +1,4 @@
-local _VERSION = '1.0.0';
+local _VERSION = '2.0.0';
 
 local net = require('/apis/net')();
 
@@ -35,7 +35,7 @@ local function writeFile(path, content)
 end
 
 local function getStartupCommand()
-  return trim(readFile('.cubestartup') or "")
+  return trim(readFile('.cubeboot') or "")
 end
 
 -- ping event
@@ -54,9 +54,9 @@ net.listenRequest(CUBE_CHANNEL, "reboot", function(_, reply)
   end, 0.1);
 end)
 
--- set-startup event
-net.listenRequest(CUBE_CHANNEL, "set-startup", function(startupCommand, reply)
-  local res = writeFile('/.cubestartup', startupCommand);
+-- set-boot event
+net.listenRequest(CUBE_CHANNEL, "set-boot", function(startupCommand, reply)
+  local res = writeFile('/.cubeboot', startupCommand);
   reply(res);
 end)
 
