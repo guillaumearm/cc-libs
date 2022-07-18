@@ -38,7 +38,7 @@ for _, filePath in pairs(LIST_FILES) do
 end
 
 print()
-print('=> Execute startup.lua')
-shell.execute('/startup.lua')
+print('=> Execute startup/servers.lua')
+shell.execute('/startup/servers.lua')
 
 shell.setDir(previousDir)

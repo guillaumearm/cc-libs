@@ -1,4 +1,4 @@
-local _VERSION = '1.2.0';
+local _VERSION = '1.3.0';
 local CUBE_CHANNEL = 64;
 
 local net = require('/apis/net')();
@@ -29,8 +29,11 @@ local rightPad = function(str, len, char)
   return str;
 end
 
-local function getRow(str1, str2, str3)
-  local row1 = leftPad(tostring(str1 or ''), 6, ' ')
+local function getRow(margin, str1, str2, str3)
+
+  margin = margin or '';
+
+  local row1 = leftPad(margin .. tostring(str1 or ''), 8, ' ')
   local row2 = leftPad(tostring(str2 or ''), 16, ' ')
   local row3 = leftPad(tostring(str3 or ''), 6, ' ')
 
@@ -171,23 +174,14 @@ local COMMANDS = {
     end
 
     -- print('ID    LABEL\t\t\t\tSTARTUP');
-    print(getRow('ID', 'LABEL', 'STARTUP'))
+    print(getRow('  ', 'ID', 'LABEL', 'STARTUP'))
+    print('--------------------------------------------')
 
     for k in ipairs(results) do
       local result = results[k];
       local packet = packets[k];
 
-
-      -- local row1 = leftPad(tostring(packet.sourceId or ''), 8, ' ')
-      -- local row2 = leftPad(tostring(packet.sourceLabel or ''), 12, ' ')
-      -- local row3 = leftPad(tostring(result.startup or ''), 12, ' ')
-      -- print(packet.sourceId, packet.sourceLabel or '', result.startup)
-      print(getRow(packet.sourceId, packet.sourceLabel, result.startup))
-      -- print("=> " .. tostring(packet.sourceId)
-      --   ..
-      --   (
-      --   packet.sourceLabel and " (label=" .. tostring(packet.sourceLabel) .. ")" or
-      --       "") .. ": startup='" .. result.startup .. "'");
+      print(getRow('  ', packet.sourceId, packet.sourceLabel, result.startup))
     end
   end,
   configure = function()
